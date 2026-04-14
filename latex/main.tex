@@ -1,0 +1,102 @@
+\documentclass{article}
+
+% NeurIPS 2026 style (Main Track, double-blind submission)
+\usepackage[main, final]{neurips_2026}
+
+% --- Encoding and typography ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+
+% --- Mathematics ---
+\usepackage{amsmath,amssymb,amsthm}
+
+% --- Figures ---
+\usepackage{graphicx}
+\usepackage[caption=false]{subfig}
+\usepackage{float}
+
+% --- Tables ---
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{tabularx}
+
+% --- Colors and links ---
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+
+% --- URLs ---
+\usepackage{url}
+
+% --- Compact symbols ---
+\usepackage{nicefrac}
+
+% --- Symbols for comparison table ---
+\usepackage{pifont}
+
+% --- Theorem environments ---
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+
+% --- Custom commands ---
+\newcommand{\gfscore}{\text{GF-Score}}
+\newcommand{\greatscore}{\hat{\Omega}}
+\newcommand{\greatclass}[1]{\hat{\Omega}_{#1}}
+\newcommand{\rdi}{\text{RDI}}
+\newcommand{\nrgc}{\text{NRGC}}
+\newcommand{\wcr}{\text{WCR}}
+\newcommand{\fpgreat}{\text{FP-GREAT}}
+
+% ====================================================================
+
+\title{GF-Score: Certified Class-Conditional Robustness Evaluation with Fairness Guarantees}
+
+\author{%
+  Arya Shah\\
+  IIT Gandhinagar\\
+  \texttt{arya.shah@iitgn.ac.in}
+  \And
+  Kaveri Visavadiya\\
+  IIT Gandhinagar\\
+  \texttt{kaveri.visavadiya@iitgn.ac.in}
+  \And
+  Manisha Padala\\
+  IIT Gandhinagar\\
+  \texttt{manisha.padala@iitgn.ac.in}
+}
+
+\begin{document}
+
+\maketitle
+
+% --- Abstract ---
+\input{sections/abstract}
+
+% --- Introduction and Motivation ---
+\input{sections/introduction}
+
+% --- Related Work ---
+\input{sections/related_work}
+
+% --- Methodology ---
+\input{sections/method}
+
+% --- Experimental Setup & Theoretical Analysis ---
+\input{sections/experimental_setup}
+
+% --- Results ---
+\input{sections/results}
+
+% --- Discussion and Limitations ---
+\input{sections/discussion}
+
+% --- References ---
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+% --- Appendix ---
+\appendix
+\input{sections/appendix}
+
+\end{document}

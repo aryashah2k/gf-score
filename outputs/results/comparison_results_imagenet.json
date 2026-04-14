@@ -1,0 +1,21 @@
+{
+  "decomposition_consistent": true,
+  "rank_correlations": {
+    "ours_uncal_vs_rb": 0.8999999999999998,
+    "paper_uncal_vs_rb": 0.800,
+    "ours_cal_vs_rb": 0.9999999999999999,
+    "paper_cal_vs_rb": null,
+    "ours_vs_paper_test": null
+  },
+  "novel_insights": {
+    "most_fair_model": "Salman_R18",
+    "most_fair_rdi": 1.1256561988592149,
+    "least_fair_model": "Salman_WRN50-2",
+    "least_fair_rdi": 1.2311105996742844,
+    "worst_class_distribution": {
+      "n01756291": 1,
+      "n04525038": 3,
+      "n03710637": 1
+    }
+  }
+}

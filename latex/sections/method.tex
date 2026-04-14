@@ -1,0 +1,108 @@
+\section{Methodology}
+\label{sec:method}
+
+We present the GF-Score framework in three parts. \Cref{sec:decomposition} introduces the class-conditional decomposition of the GREAT Score with its consistency guarantee. \Cref{sec:metrics} defines four disparity metrics grounded in welfare economics. \Cref{sec:calibration} describes the attack-free self-calibration procedure that makes the entire pipeline independent of adversarial attacks. Formal concentration bounds and their proofs are deferred to \Cref{sec:theoretical}.
+
+\subsection{Preliminaries: The GREAT Score}
+\label{sec:prelim}
+
+We briefly recall the GREAT Score~\citep{li2024greatscoreglobalrobustness}. Let $f: \mathcal{X} \to \mathbb{R}^K$ be a classifier mapping inputs to $K$-dimensional logits. Given a generative model $G$ that approximates the data distribution, the GREAT Score defines a certified global robustness metric as
+\begin{equation}
+    \Omega(f) = \mathbb{E}_{z \sim p_z}\bigl[g\bigl(G(z)\bigr)\bigr],
+    \label{eq:great_score}
+\end{equation}
+where $g(x) = \sqrt{\pi/2} \cdot \max\bigl\{\sigma(f(x))_{y} - \max_{j \neq y} \sigma(f(x))_j,\; 0\bigr\}$ is the local robustness score, $\sigma$ denotes the sigmoid or softmax activation scaled by a temperature parameter $T$, and $y$ is the ground-truth label of $x$. The local score $g(x)$ provides a certified lower bound on the $\ell_2$ perturbation required to change the prediction at $x$~\citep{li2024greatscoreglobalrobustness}. Given $N$ i.i.d.\ samples, the finite-sample estimator is $\hat{\Omega}(f) = \frac{1}{N}\sum_{i=1}^{N} g(x_i)$.
+
+\subsection{Class-Conditional Decomposition}
+\label{sec:decomposition}
+
+The aggregate GREAT Score averages the local robustness scores over all samples irrespective of their class membership. We propose to partition the evaluation set by ground-truth labels to obtain per-class robustness profiles.
+
+\begin{definition}[Per-Class GREAT Score]
+\label{def:per_class}
+Let $\mathcal{S}_k = \{x_i : y_i = k\}$ denote the set of $n_k$ samples belonging to class $k \in \{1, \ldots, K\}$. The per-class GREAT Score for class $k$ is
+\begin{equation}
+    \hat{\Omega}_k(f) = \frac{1}{n_k} \sum_{i : y_i = k} g(x_i).
+    \label{eq:per_class_score}
+\end{equation}
+\end{definition}
+
+Since $g(x_i)$ inherits the certified lower-bound property of the original GREAT Score for each sample, $\hat{\Omega}_k(f)$ is the average certified robustness bound restricted to class $k$. The following result shows that this decomposition is exact.
+
+\textbf{Decomposition consistency.} The aggregate score can be recovered from the per-class scores as a weighted average:
+\begin{equation}
+    \hat{\Omega}(f) = \sum_{k=1}^{K} \frac{n_k}{N} \hat{\Omega}_k(f),
+    \label{eq:decomposition}
+\end{equation}
+where $N = \sum_{k=1}^{K} n_k$ is the total number of samples. This identity holds exactly by linearity of the mean: each sample contributes to exactly one class partition, and the weighted recombination recovers the global average. We verify empirically that this identity holds with zero numerical error across all 22 models (\Cref{sec:exp_decomposition}). Concentration bounds for the per-class estimates are established in \Cref{sec:theoretical}.
+
+\subsection{Robustness Disparity Metrics}
+\label{sec:metrics}
+
+Given the $K$-dimensional vector of per-class scores $(\hat{\Omega}_1, \ldots, \hat{\Omega}_K)$, we define four complementary metrics that each capture a different facet of the robustness distribution. These metrics are grounded in welfare economics and adapted to the robustness evaluation setting.
+
+\begin{definition}[Robustness Disparity Index (RDI)]
+\label{def:rdi}
+\begin{equation}
+    \mathrm{RDI}(f) = \max_{k} \hat{\Omega}_k(f) - \min_{k} \hat{\Omega}_k(f).
+    \label{eq:rdi}
+\end{equation}
+The RDI measures the range of per-class robustness scores. It is zero if and only if all classes have equal robustness, and is bounded above by $\sqrt{\pi/2} \approx 1.253$. This metric adapts the Max Group Disparity principle commonly used in fairness auditing.
+\end{definition}
+
+\begin{definition}[Normalized Robustness Gini Coefficient (NRGC)]
+\label{def:nrgc}
+\begin{equation}
+    \mathrm{NRGC}(f) = \frac{\displaystyle\sum_{i=1}^{K}\sum_{j=1}^{K} |\hat{\Omega}_i - \hat{\Omega}_j|}{2K^2 \cdot \bar{\Omega}},
+    \label{eq:nrgc}
+\end{equation}
+where $\bar{\Omega} = \frac{1}{K}\sum_{k=1}^{K} \hat{\Omega}_k$ is the mean per-class score. The NRGC adapts the Gini coefficient to robustness evaluation: it lies in $[0, 1)$, with 0 indicating perfect equality and values approaching 1 indicating maximal concentration. Unlike RDI, the NRGC captures the full shape of the distribution rather than only the extremes, making it more informative when $K > 2$.
+\end{definition}
+
+\begin{definition}[Worst-Case Class Robustness (WCR)]
+\label{def:wcr}
+\begin{equation}
+    \mathrm{WCR}(f) = \min_{k} \hat{\Omega}_k(f).
+    \label{eq:wcr}
+\end{equation}
+Grounded in the Rawlsian maximin principle~\citep{rawls1971theory}, WCR gives the certified robustness level guaranteed for \emph{every} class. A model passes a fairness audit only if $\mathrm{WCR}(f) \geq \tau$ for some application-specific threshold $\tau$. This metric is particularly relevant for safety-critical deployments where no class can be left unprotected.
+\end{definition}
+
+\begin{definition}[Fairness-Penalized GREAT Score (FP-GREAT)]
+\label{def:fp_great}
+\begin{equation}
+    \mathrm{FP\text{-}GREAT}(f; \lambda) = \bar{\Omega}(f) - \lambda \cdot \mathrm{RDI}(f),
+    \label{eq:fp_great}
+\end{equation}
+where $\lambda \geq 0$ controls the fairness penalty weight. When $\lambda = 0$, the metric reduces to the mean per-class GREAT Score (no fairness consideration). As $\lambda$ increases, models with high disparity are penalized more heavily. This formulation adapts the Inequality-Adjusted Human Development Index (IHDI) used by the United Nations Development Programme, which discounts aggregate welfare by an inequality measure.
+\end{definition}
+
+\textbf{Complementarity of metrics.} The four metrics serve distinct roles. RDI flags the existence of disparity; NRGC quantifies its severity across the full distribution; WCR identifies the weakest link; FP-GREAT produces an adjusted ranking. Together, they provide a comprehensive robustness-fairness profile for any model. A concentration bound for the empirical RDI is provided in \Cref{sec:theoretical}.
+
+\subsection{Attack-Free Self-Calibration}
+\label{sec:calibration}
+
+The original GREAT Score framework uses the C\&W attack~\citep{carlini2017evaluatingrobustnessneuralnetworks} to calibrate the temperature parameter $T$ in the softmax/sigmoid activation by maximizing rank correlation between GREAT Scores and attack-based robustness rankings. This dependence on adversarial attacks undermines the computational advantages of the certified approach. We propose a fully attack-free alternative.
+
+\textbf{Key insight.} There exists a well-established monotonic relationship between adversarial robustness and clean accuracy~\citep{tsipras2019robustnessoddsaccuracy}: models that are more robust tend to achieve higher clean accuracy within the same defense family. We exploit this relationship to calibrate $T$ using only publicly available clean accuracy values from RobustBench~\citep{croce2021robustbenchstandardizedadversarialrobustness}, which require no adversarial computation.
+
+\begin{definition}[Accuracy-Correlation Self-Calibration]
+\label{def:self_cal}
+Given $M$ models $\{f_m\}_{m=1}^{M}$ with known clean accuracies $\{a_m\}_{m=1}^{M}$, the self-calibrated temperature is
+\begin{equation}
+    T^* = \arg\max_{T \in \mathcal{T}} \; \rho_s\!\left(\bigl\{\hat{\Omega}^{(T)}(f_m)\bigr\}_{m=1}^{M},\; \bigl\{a_m\bigr\}_{m=1}^{M}\right),
+    \label{eq:self_calibration}
+\end{equation}
+where $\rho_s$ denotes Spearman's rank correlation coefficient~\citep{spearman1904proof} and $\mathcal{T}$ is the search space.
+\end{definition}
+
+\textbf{Optimization procedure.} We employ a two-phase grid search. The coarse phase evaluates temperatures in $[0.01, 10.0]$ with step size $0.1$. The fine phase refines the search in a neighborhood of the best coarse temperature with step size $0.001$. This procedure is computationally inexpensive since it only requires recomputing softmax/sigmoid outputs from cached logits (no additional forward passes).
+
+\textbf{Ranking stability calibration.} As a complementary approach, we also consider a stability-based calibration that selects the temperature at which per-class score rankings are most stable under small perturbations:
+\begin{equation}
+    T^*_{\mathrm{stab}} = \arg\max_{T \in \mathcal{T}} \min_{T' \in [T - \delta_T, T + \delta_T]} \rho_s\!\left(\mathrm{rank}(\hat{\boldsymbol{\Omega}}^{(T)}),\; \mathrm{rank}(\hat{\boldsymbol{\Omega}}^{(T')})\right),
+    \label{eq:stability_calibration}
+\end{equation}
+where $\delta_T$ is a small perturbation window and $\hat{\boldsymbol{\Omega}}^{(T)} = (\hat{\Omega}_1^{(T)}, \ldots, \hat{\Omega}_K^{(T)})$ is the vector of per-class scores at temperature $T$. This criterion ensures that the chosen temperature produces robust rankings that do not fluctuate with minor parameter changes.
+
+\textbf{Complete pipeline.} Combining the three components, the GF-Score evaluation pipeline proceeds as follows: (1) collect logits via forward passes on test or generated samples; (2) partition samples by class and compute per-class GREAT Scores (\Cref{def:per_class}); (3) compute disparity metrics (Definitions~\ref{def:rdi}--\ref{def:fp_great}); (4) self-calibrate the temperature (\Cref{def:self_cal}) and recompute all scores at $T^*$. The entire pipeline requires only forward passes through the classifier, with no adversarial attack computation at any stage.

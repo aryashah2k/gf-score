@@ -1,0 +1,58 @@
+\section{Related Work}
+\label{sec:related_work}
+
+Our work lies at the intersection of three active research areas: adversarial robustness evaluation, fairness in adversarial training, and inequality measurement in machine learning. We synthesize each area below and position our contribution relative to existing methods in \Cref{tab:comparison}.
+
+\subsection{Adversarial Robustness Evaluation}
+\label{sec:rw_evaluation}
+
+Since the discovery that neural networks are vulnerable to imperceptible perturbations~\citep{szegedy2014intriguingpropertiesneuralnetworks, goodfellow2015explainingharnessingadversarialexamples}, a rich line of work has developed increasingly powerful attacks to evaluate robustness. Gradient-based methods such as PGD~\citep{madry2019deeplearningmodelsresistant} and the C\&W attack~\citep{carlini2017evaluatingrobustnessneuralnetworks} became standard tools, though \citet{athalye2018obfuscatedgradientsfalsesense} showed that many defenses merely obfuscated gradients rather than achieving true robustness. The AutoAttack ensemble~\citep{croce2020reliableevaluationadversarialrobustness} addressed this by combining complementary attack strategies into a reliable evaluation protocol, and RobustBench~\citep{croce2021robustbenchstandardizedadversarialrobustness} standardized model comparison through a public leaderboard.
+
+In parallel, certified approaches emerged to provide provable robustness guarantees. Convex relaxation methods~\citep{wong2018provabledefensesadversarialexamples} and randomized smoothing~\citep{cohen2019certifiedadversarialrobustnessrandomized, lecuyer2019certifiedrobustnessadversarialexamples, salman2020provablyrobustdeeplearning} offer formal certificates that no perturbation within a given norm ball can change the prediction. \citet{li2023sokcertifiedrobustnessdeep} provide a comprehensive systematization of these approaches. However, all certified methods operate at the \emph{per-sample} level, producing local guarantees that must be aggregated to characterize a model's overall robustness. The GREAT Score~\citep{li2024greatscoreglobalrobustness} took a fundamentally different approach by defining a \emph{global} certified robustness metric over the data distribution using generative models, achieving strong rank correlation with RobustBench while requiring only forward passes. Our work extends the GREAT Score by decomposing this global metric into per-class components, revealing structure that the aggregate score conceals.
+
+\subsection{Fairness in Adversarial Robustness}
+\label{sec:rw_fairness}
+
+The observation that adversarial training creates significant class-wise performance gaps was first documented empirically by \citet{benz2021robustnessoddsfairnessempirical}, who showed that robust accuracy can vary by over 30 percentage points across classes. \citet{xu2021robustfairfairnessadversarial} formalized this as the \emph{robust fairness} problem and proposed Fair Robust Learning (FRL) through class-level reweighting and remargin strategies. \citet{tian2021analysisapplicationsclasswiserobustness} further analyzed the phenomenon at KDD 2021, demonstrating that class-wise vulnerability patterns are systematic rather than random.
+
+These findings inspired a wave of training-time interventions. \citet{wei2023cfaclasswisecalibratedfair} proposed class-wise calibrated adversarial configurations (CFA) that adapt attack strength per class. \citet{sun2022improvingrobustfairnessbalance} introduced balanced adversarial training (BAT) to equalize robustness across classes. \citet{li2023watimproveworstclassrobustness} optimized directly for worst-class robustness via WAT. More recently, \citet{zhang2024fairnessawareadversariallearning} framed the problem through distributionally robust optimization (FAAL), \citet{zhi2025fairclasswiserobustnessclass} proposed class-optimal distribution adversarial training (CODA), \citet{jin2025enhancingrobustfairnessconfusional} regularized the spectral norm of the robust confusion matrix at ICLR 2025, and \citet{lin2023hardadversarialexamplemining} proposed hard adversarial example mining to improve robust fairness. The connection to broader fairness literature is reinforced by \citet{sagawa2020distributionallyrobustneuralnetworks}, who showed that standard training can fail on minority groups and proposed GroupDRO for worst-group optimization. Several concurrent works continue to address class-wise disparity from complementary angles~\citep{amerehi2025narrowingclasswiserobustnessgaps, zhu2026reducingclasswiseperformancedisparity, Mou2025-he}.
+
+A crucial observation is that \textbf{all of the above methods operate at training time}. They modify the adversarial training procedure to produce fairer models, but they do not provide tools for \emph{post-hoc auditing} of models that have already been trained and deployed. Our framework fills precisely this gap: it evaluates and quantifies class-level robustness disparity for any given model, without requiring retraining or adversarial attacks.
+
+\subsection{Inequality Metrics and Welfare-Theoretic Fairness}
+\label{sec:rw_inequality}
+
+Our disparity metrics draw on a long tradition in welfare economics. The Gini coefficient has been the standard measure of distributional inequality for over a century, and the Rawlsian maximin principle~\citep{rawls1971theory} provides a philosophical foundation for prioritizing the worst-off group. \citet{Speicher_2018} were among the first to connect these classical inequality indices to algorithmic fairness, proposing a unified framework that encompasses individual and group fairness through generalized entropy indices and the Gini coefficient. \citet{cousins2021axiomatictheoryprovablyfairwelfarecentric} formalized welfare-centric machine learning axiomatically at NeurIPS 2021, establishing conditions under which welfare functions yield provably fair outcomes.
+
+Despite this rich foundation, no prior work has applied formal inequality metrics to \emph{certified robustness bounds}. Existing fairness-aware robustness studies~\citep{xu2021robustfairfairnessadversarial, wei2023cfaclasswisecalibratedfair, zhang2024fairnessawareadversariallearning} use ad-hoc measures such as the gap between the best and worst class accuracy, without grounding them in established fairness theory. Our RDI, NRGC, WCR, and FP-GREAT metrics bridge this disconnect by applying principled inequality measures from welfare economics directly to certified per-class robustness scores, and we further provide formal concentration bounds on these metrics via Hoeffding's inequality~\citep{Hoeffding1963-sq}.
+
+\subsection{Positioning of This Work}
+
+\Cref{tab:comparison} summarizes how the GF-Score relates to prior work along five key dimensions. Unlike training-time fairness methods, our framework requires no model modification. Unlike existing evaluation methods, it provides per-class certified guarantees with formal disparity quantification. The combination of attack-free evaluation, class-conditional decomposition, and welfare-grounded fairness metrics is, to our knowledge, novel.
+
+\begin{table}[t]
+    \caption{Comparison of the GF-Score with prior methods across five key dimensions. \textbf{Certified}: provides provable robustness guarantees. \textbf{Per-class}: offers class-level granularity. \textbf{Attack-free}: does not require adversarial attacks. \textbf{Post-hoc}: applicable to already-trained models. \textbf{Fairness metrics}: includes formal disparity quantification grounded in established theory.}
+    \label{tab:comparison}
+    \centering
+    \small
+    \begin{tabular}{@{}lccccc@{}}
+        \toprule
+        \textbf{Method} & \textbf{Certified} & \textbf{Per-class} & \textbf{Attack-free} & \textbf{Post-hoc} & \textbf{Fairness metrics} \\
+        \midrule
+        AutoAttack~\citep{croce2020reliableevaluationadversarialrobustness} & \ding{55} & \ding{55} & \ding{55} & \ding{51} & \ding{55} \\
+        RobustBench~\citep{croce2021robustbenchstandardizedadversarialrobustness} & \ding{55} & \ding{55} & \ding{55} & \ding{51} & \ding{55} \\
+        Rand.\ Smoothing~\citep{cohen2019certifiedadversarialrobustnessrandomized} & \ding{51} & \ding{51}\textsuperscript{*} & \ding{51} & \ding{51} & \ding{55} \\
+        GREAT Score~\citep{li2024greatscoreglobalrobustness} & \ding{51} & \ding{55} & \ding{51} & \ding{51} & \ding{55} \\
+        FRL~\citep{xu2021robustfairfairnessadversarial} & \ding{55} & \ding{51} & \ding{55} & \ding{55} & \ding{55} \\
+        CFA~\citep{wei2023cfaclasswisecalibratedfair} & \ding{55} & \ding{51} & \ding{55} & \ding{55} & \ding{55} \\
+        WAT~\citep{li2023watimproveworstclassrobustness} & \ding{55} & \ding{51} & \ding{55} & \ding{55} & \ding{55} \\
+        BAT~\citep{sun2022improvingrobustfairnessbalance} & \ding{55} & \ding{51} & \ding{55} & \ding{55} & \ding{55} \\
+        FAAL~\citep{zhang2024fairnessawareadversariallearning} & \ding{55} & \ding{51} & \ding{55} & \ding{55} & \ding{55} \\
+        CODA~\citep{zhi2025fairclasswiserobustnessclass} & \ding{55} & \ding{51} & \ding{55} & \ding{55} & \ding{55} \\
+        CSR~\citep{jin2025enhancingrobustfairnessconfusional} & \ding{55} & \ding{51} & \ding{55} & \ding{55} & \ding{55} \\
+        \midrule
+        \textbf{GF-Score (Ours)} & \ding{51} & \ding{51} & \ding{51} & \ding{51} & \ding{51} \\
+        \bottomrule
+        \multicolumn{6}{@{}l}{\textsuperscript{*}\footnotesize Per-sample certificates can be aggregated per class, but no prior work has done so with disparity metrics.}
+    \end{tabular}
+\end{table}

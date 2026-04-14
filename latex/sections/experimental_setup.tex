@@ -1,0 +1,72 @@
+\section{Experimental Setup and Theoretical Analysis}
+\label{sec:exp_setup_theory}
+
+\subsection{Setup}
+\label{sec:exp_setup}
+
+\textbf{Models and datasets.} We evaluate 22 adversarially robust models from RobustBench~\citep{croce2021robustbenchstandardizedadversarialrobustness}: 17 CIFAR-10~\citep{krizhevsky2009learning} models under the $\ell_2$ threat model and 5 ImageNet~\citep{russakovsky2015imagenet} models under $\ell_\infty$. CIFAR-10 models span diverse training methods including PGD-AT~\citep{madry2019deeplearningmodelsresistant}, TRADES~\citep{zhang2019trades}, AWP~\citep{wu2020adversarial}, data augmentation with DDPM~\citep{rebuffi2021fixing}, and MMA training~\citep{ding2020mma}. ImageNet models include adversarially trained ResNet and WideResNet variants~\citep{salman2020provablyrobustdeeplearning, wong2020fast}. We use the standard test sets (10K for CIFAR-10; 50K for ImageNet) with GAN-generated samples for GREAT Score computation following the protocol of \citet{li2024greatscoreglobalrobustness}.
+
+\textbf{Implementation.} All evaluations use only forward passes with cached logits. Temperature is set to $T=1.0$ (uncalibrated) or $T^*$ (self-calibrated). We use sigmoid activation for CIFAR-10 and softmax for ImageNet, matching the original GREAT Score setup. The fairness penalty is set to $\lambda = 0.5$ for FP-GREAT. Full model lists and per-class breakdowns are in Appendix~\ref{app:full_results}.
+
+\subsection{Theoretical Analysis}
+\label{sec:theoretical}
+
+We establish formal concentration guarantees for the per-class GREAT Scores and the derived disparity metrics.
+
+\begin{proposition}[Per-Class Concentration Bound]
+\label{prop:per_class_concentration}
+Since $g(x) \in [0, \sqrt{\pi/2}]$ is bounded, Hoeffding's inequality~\citep{Hoeffding1963-sq} gives, for each class $k$ and any $\epsilon > 0$:
+\begin{equation}
+    \Pr\bigl[|\hat{\Omega}_k - \Omega_k| \geq \epsilon\bigr] \leq 2\exp\!\left(-\frac{2 n_k \epsilon^2}{\pi/2}\right).
+    \label{eq:hoeffding_class}
+\end{equation}
+Setting $\delta_k = 2\exp(-2n_k\epsilon^2 / (\pi/2))$ and applying a union bound over $K$ classes, with probability at least $1 - \delta$, simultaneously for all $k$:
+\begin{equation}
+    |\hat{\Omega}_k - \Omega_k| \leq \sqrt{\frac{\pi \log(2K/\delta)}{4 n_k}}.
+    \label{eq:concentration_all}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The local score $g(x)$ is bounded in $[0, \sqrt{\pi/2}]$ by construction (the confidence margin lies in $[0, 1]$ and is scaled by $\sqrt{\pi/2}$). For class $k$, the $n_k$ samples are i.i.d.\ draws from the class-conditional distribution, so Hoeffding's inequality applies directly with range parameter $b - a = \sqrt{\pi/2}$. Setting $\delta_k = \delta/K$ for each class and inverting for $\epsilon$ yields the stated bound. The union bound ensures all $K$ inequalities hold simultaneously.
+\end{proof}
+
+\textbf{Interpretation.} With $n_k = 1{,}000$ samples per class, $K = 10$ classes, and $\delta = 0.05$, the bound gives $|\hat{\Omega}_k - \Omega_k| \leq 0.069$ simultaneously for all classes.
+
+\begin{proposition}[RDI Concentration Bound]
+\label{prop:rdi_concentration}
+Let $n_{\min} = \min_k n_k$. Under the conditions of \Cref{prop:per_class_concentration}, with probability at least $1 - \delta$:
+\begin{equation}
+    |\widehat{\mathrm{RDI}} - \mathrm{RDI}| \leq 2\sqrt{\frac{\pi \log(2K/\delta)}{4 n_{\min}}}.
+    \label{eq:rdi_concentration}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The empirical RDI is $\widehat{\mathrm{RDI}} = \max_k \hat{\Omega}_k - \min_k \hat{\Omega}_k$, and the population RDI is $\mathrm{RDI} = \max_k \Omega_k - \min_k \Omega_k$. By the triangle inequality:
+\begin{align}
+    |\widehat{\mathrm{RDI}} - \mathrm{RDI}| &\leq |\hat{\Omega}_{k^*} - \Omega_{k^*}| + |\hat{\Omega}_{k_*} - \Omega_{k_*}| \nonumber \\
+    &\leq 2 \max_k |\hat{\Omega}_k - \Omega_k|,
+    \label{eq:rdi_triangle}
+\end{align}
+where $k^* = \arg\max_k \Omega_k$ and $k_* = \arg\min_k \Omega_k$. Applying \Cref{prop:per_class_concentration} with $n_k \geq n_{\min}$ for all $k$ completes the proof.
+\end{proof}
+
+\subsection{Decomposition Consistency}
+\label{sec:exp_decomposition}
+
+The weighted sum $\sum_k (n_k/N)\hat{\Omega}_k$ recovers the aggregate $\hat{\Omega}$ with \textbf{zero numerical error} across all 22 models on both datasets, confirming the mathematical identity in \Cref{eq:decomposition}. This also verifies our implementation: the per-class partition is exhaustive and non-overlapping.
+
+
+% [2]  Krizhevsky (2009) "Learning Multiple Layers of Features from Tiny Images" - https://www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf
+% [3]  Russakovsky et al. (2015) "ImageNet Large Scale Visual Recognition Challenge" IJCV - https://arxiv.org/abs/1409.0575
+% [4]  Madry et al. (2018) "Towards Deep Learning Models Resistant to Adversarial Attacks" ICLR - https://arxiv.org/abs/1706.06083
+% [5]  Zhang et al. (2019) "TRADES" ICML - https://arxiv.org/abs/1901.08573
+% [6]  Wu et al. (2020) "AWP" NeurIPS - https://arxiv.org/abs/2004.05884
+% [7]  Rebuffi et al. (2021) "Fixing Data Augmentation" NeurIPS - https://arxiv.org/abs/2103.01946
+% [8]  Ding et al. (2020) "MMA Training" ICLR - https://arxiv.org/abs/1812.02637
+% [9]  Salman et al. (2020) "Do Adversarially Robust ImageNet Models Transfer Better?" NeurIPS - https://arxiv.org/abs/2007.08489
+% [10] Wong et al. (2020) "Fast is better than free" ICLR - https://arxiv.org/abs/2001.03994
+% [11] Li et al. (2024) "GREAT Score" NeurIPS - https://arxiv.org/abs/2304.09875
+% [12] Hoeffding (1963) "Probability Inequalities for Sums of Bounded Random Variables" JASA - https://doi.org/10.1080/01621459.1963.10500830
+%

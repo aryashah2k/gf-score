@@ -1,0 +1,143 @@
+===========================================================
+GF-Score: Step-by-Step Execution Guide
+===========================================================
+
+PREREQUISITES:
+- Python 3.9+
+- NVIDIA GPU with CUDA support (recommended for ImageNet)
+- ~15 GB disk space (data + models)
+
+===========================================================
+STEP 1: Install dependencies
+===========================================================
+
+cd c:\Users\Arya\Desktop\great
+pip install -r gf_score/requirements.txt
+
+===========================================================
+STEP 2: Download and prepare data
+===========================================================
+
+# 2a. Downloads CIFAR-10 test set (10,000 images, 1000 per class)
+python -m gf_score.data.download_data
+
+# 2b. Prepare ImageNet validation set (requires manual download first)
+#     Download ILSVRC2012_img_val.tar + ILSVRC2012_devkit_t12.tar.gz
+#     from image-net.org and place them in data/
+python scripts\prepare_imagenet.py
+
+===========================================================
+STEP 3: Run unit tests (verify installation)
+===========================================================
+
+python -m pytest gf_score/tests/ -v --tb=short
+
+# Expected: all tests pass (~50 tests)
+
+===========================================================
+STEP 4A: Quick test run — CIFAR-10 (2 models, ~5 min)
+===========================================================
+
+python -m gf_score.evaluation.run_evaluation --quick_test
+
+===========================================================
+STEP 4B: Full evaluation — CIFAR-10 (17 L2 models)
+===========================================================
+
+python -m gf_score.evaluation.run_evaluation
+
+# Evaluates all 17 CIFAR-10 RobustBench L2 models.
+# Expected time: ~30-60 minutes depending on GPU.
+# Checkpoints saved; re-run to resume if interrupted.
+
+===========================================================
+STEP 4C: Quick test run — ImageNet (2 models, ~10 min)
+===========================================================
+
+python -m gf_score.evaluation.run_evaluation --dataset imagenet --quick_test
+
+# First run prepares data cache (~10 min for 50K resized images).
+# Subsequent runs load from cache in seconds.
+
+===========================================================
+STEP 4D: Full evaluation — ImageNet (5 Linf models)
+===========================================================
+
+python -m gf_score.evaluation.run_evaluation --dataset imagenet
+
+# Evaluates all 5 ImageNet RobustBench Linf models.
+# Uses Linf threat model (eps=4/255).
+# Expected time: ~2-4 hours on CPU, ~30-60 min on GPU.
+
+===========================================================
+STEP 5: Run comparison analysis
+===========================================================
+
+# CIFAR-10 comparison with original paper
+python -m gf_score.evaluation.comparison
+
+# ImageNet comparison
+python -m gf_score.evaluation.comparison --dataset imagenet
+
+===========================================================
+STEP 6: Generate publication-ready figures
+===========================================================
+
+# CIFAR-10 figures (8 figures in outputs/figures/)
+python -m gf_score.visualization.plots
+
+# ImageNet figures (adapted for 1000 classes)
+python -m gf_score.visualization.plots --dataset imagenet
+
+===========================================================
+STEP 7: Launch interactive auditing dashboard
+===========================================================
+
+python -m gf_score.auditing_tool.app
+
+# Opens Gradio interface at http://localhost:7860
+
+===========================================================
+OUTPUT FILES SUMMARY
+===========================================================
+
+data/
+  cifar10/                              - Downloaded CIFAR-10 data
+  imagenet/
+    val/                                - Extracted ImageNet classes (1000 folders)
+    imagenet_val_prepared.npz           - Preprocessed cache (224x224, [0,1])
+    imagenet_val_meta.json              - Class name metadata
+
+outputs/
+  checkpoints/
+    logits/<model>_logits.npz           - Cached model logits (resume support)
+    scores/<model>_scores.json          - Per-class score checkpoints
+  results/
+    full_results.json                   - CIFAR-10 results
+    full_results_imagenet.json          - ImageNet results
+    summary_table.csv                   - CIFAR-10 summary CSV
+    summary_table_imagenet.csv          - ImageNet summary CSV
+    per_class_scores.csv                - CIFAR-10 per-class scores
+    comparison_results.json             - CIFAR-10 comparison with paper
+    comparison_results_imagenet.json    - ImageNet comparison
+    self_calibration_*_cifar10.json     - CIFAR-10 calibration
+    self_calibration_*_imagenet.json    - ImageNet calibration
+  figures/
+    01-08_*.png                         - Publication figures (300 DPI)
+    01-08_*.pdf                         - Publication figures (vector)
+
+===========================================================
+REPRODUCIBILITY NOTES
+===========================================================
+
+1. Random seeds are fixed in data preparation (seed=42)
+2. All model inference is deterministic (torch.no_grad)
+3. Intermediate results are saved as checkpoints
+4. To reproduce from scratch, delete outputs/ folder
+5. RobustBench models are downloaded once to ~/.cache/robustbench/
+6. ImageNet uses softmax activation, CIFAR-10 uses sigmoid (per paper)
+7. ImageNet uses Linf threat model (eps=4/255),
+   CIFAR-10 uses L2 threat model (eps=0.5)
+
+===========================================================
+

@@ -1,0 +1,20 @@
+{
+  "decomposition_consistent": true,
+  "rank_correlations": {
+    "ours_uncal_vs_rb": 0.661764705882353,
+    "paper_uncal_vs_rb": 0.6618,
+    "ours_cal_vs_rb": 0.5196078431372549,
+    "paper_cal_vs_rb": 0.8971,
+    "ours_vs_paper_test": 1.0
+  },
+  "novel_insights": {
+    "most_fair_model": "Wu2020",
+    "most_fair_rdi": 0.11073938148729941,
+    "least_fair_model": "Augustin2020",
+    "least_fair_rdi": 0.43461254979270053,
+    "worst_class_distribution": {
+      "cat": 13,
+      "dog": 4
+    }
+  }
+}

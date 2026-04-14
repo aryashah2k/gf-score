@@ -1,0 +1,27 @@
+# GF-Score: GREAT-Fairness Score
+# Core dependencies
+torch>=1.13.0
+torchvision>=0.14.0
+numpy>=1.23.0
+scipy>=1.9.0
+
+# RobustBench for model loading
+robustbench>=1.1
+autoattack @ git+https://github.com/fra31/auto-attack.git
+
+# Visualization
+matplotlib>=3.6.0
+seaborn>=0.12.0
+
+# Auditing dashboard
+gradio>=4.0.0
+
+# Report generation
+jinja2>=3.1.0
+
+# Testing
+pytest>=7.0.0
+
+# Utilities
+tqdm>=4.64.0
+pandas>=1.5.0
