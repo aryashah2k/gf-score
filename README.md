@@ -320,8 +320,18 @@ For the full mathematical treatment, proofs, and concentration bounds, see the [
 
 ## Citation
 
-If you use this code or build on our work, please cite this repository:
-
+If you use this code or build on our work, please cite this repository and the ArXiv Paper:
+```bibtex
+@misc{shah2026gfscorecertifiedclassconditionalrobustness,
+      title={GF-Score: Certified Class-Conditional Robustness Evaluation with Fairness Guarantees}, 
+      author={Arya Shah and Kaveri Visavadiya and Manisha Padala},
+      year={2026},
+      eprint={2604.12757},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2604.12757}, 
+}
+```
 
 Also cite the original GREAT Score paper this work builds upon:
 
